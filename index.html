@@ -1,0 +1,99 @@
+ 
+ <!DOCTYPE html>
+<html>
+<head>
+  <title>Leaflet Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
+  <style>
+    #map { height: 100vh; width: 100vw; margin: 0; padding: 0; }
+    body { margin: 0; }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.0/papaparse.min.js"></script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+       <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+  <script>
+    // Initialize the map centered on NYC
+    const map = L.map('map').setView([40.71956276709152, -73.94708322777444], 14);
+
+    // Add OpenStreetMap tiles 
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(map);
+
+fetch('trees.csv')
+  .then(response => response.text())
+  .then(csvText => {
+    const results = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true
+    });
+
+    results.data.forEach(row => {
+      const lat = parseFloat(row.latitude);
+      const lng = parseFloat(row.longitude);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        L.circleMarker([lat, lng], {
+          radius: 3,
+          fillColor: '#228B22',
+          color: '#228B22',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.7
+        }).addTo(map);
+      }
+    });
+  });
+  </script>
+<script>
+  fetch('Parks_Properties_20260623_Community_Board_1.geojson')
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      color: '#2d6a2d',
+      weight: 1,
+      fillColor: '#57a85a',
+      fillOpacity: 0.5,
+      onEachFeature: function(feature, layer) {
+        const props = feature.properties || {};
+        const parkName = props.name311 || props.NAME || props.PARK_NAME || props.park_name || props.PROPERTY || 'Unnamed park';
+        const parkAddress = props.address || props.LOCATION || props.location || 'No address available';
+        layer.bindPopup(`<strong>${parkName}</strong><br><small>${parkAddress}</small>`);
+      }
+    }).addTo(map);
+  });
+</script>
+<script>
+ fetch('clipped_bike_lanes_cb_301.geojson')
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      color: '#2d6a2d',
+      weight: 2,
+      fillColor: '#57a85a',
+      fillOpacity: 0.5
+    }).addTo(map);
+  });
+</script>
+</body>
+</html>
+ 
